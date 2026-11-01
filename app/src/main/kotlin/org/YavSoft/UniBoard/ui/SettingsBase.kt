@@ -56,8 +56,42 @@ abstract class SettingsBase : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        prefs = Prefs(this)
+        // 真机「一打开就闪退」时，用户和开发者都看不到任何信息，只能靠猜。
+        // 所以这里把整个建界面的过程包起来：出异常不把进程弄死，
+        // 而是把异常原样画到屏幕上，同时落一份日志（见 CrashLog）。
+        try {
+            prefs = Prefs(this)
+            installContent()
+        } catch (t: Throwable) {
+            org.YavSoft.UniBoard.core.CrashLog.save(
+                this, "SettingsBase.onCreate:" + javaClass.simpleName, t
+            )
+            showCrashScreen(t)
+        }
+    }
 
+    /** 出异常时的界面：直接显示类型、消息和完整调用栈，可长按复制 */
+    private fun showCrashScreen(t: Throwable) {
+        runCatching {
+            val text = TextView(this).apply {
+                this.text = buildString {
+                    append("UniBoard 启动失败\n\n")
+                    append(t.javaClass.name).append(": ").append(t.message).append("\n\n")
+                    append(android.util.Log.getStackTraceString(t))
+                }
+                textSize = 11f
+                setTextColor(0xFFB00020.toInt())
+                setPadding(dpInt(16f), dpInt(48f), dpInt(16f), dpInt(16f))
+                setTextIsSelectable(true)
+                typeface = android.graphics.Typeface.MONOSPACE
+            }
+            val scroll = NestedScrollView(this).apply { isFillViewport = true }
+            scroll.addView(text)
+            setContentView(scroll)
+        }
+    }
+
+    private fun installContent() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(colorSurface())
