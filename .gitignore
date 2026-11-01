@@ -20,8 +20,12 @@
 *.ap_
 *.dex
 
-# 词库生成中间文件（体积大，可由 tools/gen_lexicon.py 重新获取）
-tools/lexicon/
+# 词库生成中间文件
+# 原始词典数据随仓库提供（jieba_dict.txt、en_10k.txt），保证源码包克隆后即可完整构建；
+# 其余中间产物仍由 tools/gen_lexicon.py 生成，不入库。
+tools/lexicon/*
+!tools/lexicon/jieba_dict.txt
+!tools/lexicon/en_10k.txt
 tools/*.bin
 tools/*.jar
 
