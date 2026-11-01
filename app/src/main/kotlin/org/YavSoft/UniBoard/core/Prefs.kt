@@ -26,257 +26,304 @@ class Prefs(context: Context) {
     private val sp: SharedPreferences =
         context.applicationContext.getSharedPreferences(NAME, Context.MODE_PRIVATE)
 
+    // ─────────────────────────────────────────────────────────────────────
+    // 读取兜底
+    //
+    // SharedPreferences.getInt 在「这个 key 里存的不是 Int」时会直接抛
+    // ClassCastException，而不是返回默认值。什么情况下会类型不符：
+    //   · 装过更早版本的 UniBoard，旧版本用别的类型存过同一个 key；
+    //   · allowBackup=true，换机时系统把云端备份的设置原样还回来；
+    //   · 设置文件被写坏 / 被别的工具改过。
+    //
+    // 关键在于 Prefs 是 Application.onCreate 的第一行就要读的东西
+    // （`Prefs(this).dynamicColor`），一旦抛在这里，UI 还一行都没建起来，
+    // 进程就直接没了 —— 用户看到的就是「一点开就闪退，根本进不去」。
+    // 所以每个读取都兜一层：类型不符就丢掉这条坏值、返回默认值。
+    // ─────────────────────────────────────────────────────────────────────
+    private fun readInt(key: String, def: Int): Int =
+        try {
+            sp.getInt(key, def)
+        } catch (e: ClassCastException) {
+            drop(key); def
+        }
+
+    private fun readFloat(key: String, def: Float): Float =
+        try {
+            sp.getFloat(key, def)
+        } catch (e: ClassCastException) {
+            drop(key); def
+        }
+
+    private fun readBool(key: String, def: Boolean): Boolean =
+        try {
+            sp.getBoolean(key, def)
+        } catch (e: ClassCastException) {
+            drop(key); def
+        }
+
+    private fun readString(key: String, def: String?): String? =
+        try {
+            sp.getString(key, def)
+        } catch (e: ClassCastException) {
+            drop(key); def
+        }
+
+    /** 清掉一条坏值，避免它一直被读到 */
+    private fun drop(key: String) {
+        runCatching { sp.edit().remove(key).apply() }
+    }
+
     // ---- 外观 ----
     /** 0=跟随系统 1=浅色 2=深色 */
     var themeMode: Int
-        get() = sp.getInt(K_THEME_MODE, THEME_SYSTEM)
+        get() = readInt(K_THEME_MODE, THEME_SYSTEM)
         set(v) = sp.edit().putInt(K_THEME_MODE, v).apply()
 
     /** 键盘高度占屏幕高度比例 */
     var keyboardHeightPercent: Float
-        get() = sp.getFloat(K_KB_HEIGHT, 0.34f)
+        get() = readFloat(K_KB_HEIGHT, 0.34f)
         set(v) = sp.edit().putFloat(K_KB_HEIGHT, v).apply()
 
     /** 跟随系统（Material You）动态取色 */
     var dynamicColor: Boolean
-        get() = sp.getBoolean(K_DYNAMIC_COLOR, true)
+        get() = readBool(K_DYNAMIC_COLOR, true)
         set(v) = sp.edit().putBoolean(K_DYNAMIC_COLOR, v).apply()
 
     /** 双击空格插入句号 */
     var doubleSpacePeriod: Boolean
-        get() = sp.getBoolean(K_DOUBLE_SPACE, true)
+        get() = readBool(K_DOUBLE_SPACE, true)
         set(v) = sp.edit().putBoolean(K_DOUBLE_SPACE, v).apply()
 
     /** 英文句首自动大写 */
     var autoCapitalize: Boolean
-        get() = sp.getBoolean(K_AUTO_CAPS, true)
+        get() = readBool(K_AUTO_CAPS, true)
         set(v) = sp.edit().putBoolean(K_AUTO_CAPS, v).apply()
 
     /** 悬浮外观：键盘左右留白 + 圆角，做成浮层观感 */
     var floatKeyboard: Boolean
-        get() = sp.getBoolean("float_keyboard", false)
+        get() = readBool("float_keyboard", false)
         set(v) = sp.edit().putBoolean("float_keyboard", v).apply()
 
     /** 密码框保护开关 */
     var secureInputEnabled: Boolean
-        get() = sp.getBoolean("secure_input", true)
+        get() = readBool("secure_input", true)
         set(v) = sp.edit().putBoolean("secure_input", v).apply()
 
     /** 剪贴板历史只保留最近 N 天，0 表示不按天清理 */
     var clipboardKeepDays: Int
-        get() = sp.getInt("clipboard_keep_days", 0)
+        get() = readInt("clipboard_keep_days", 0)
         set(v) = sp.edit().putInt("clipboard_keep_days", v.coerceIn(0, 90)).apply()
 
     /** 语言键循环里是否加入 PC 键盘 */
     var pcKeyboardEnabled: Boolean
-        get() = sp.getBoolean("pc_keyboard", false)
+        get() = readBool("pc_keyboard", false)
         set(v) = sp.edit().putBoolean("pc_keyboard", v).apply()
 
     /** 键盘背景不透明度（40–100，100 为不透明） */
     var keyboardAlpha: Int
-        get() = sp.getInt(K_KEY_ALPHA, 100)
+        get() = readInt(K_KEY_ALPHA, 100)
         set(v) = sp.edit().putInt(K_KEY_ALPHA, v.coerceIn(40, 100)).apply()
 
     /** 候选词字号（sp） */
     var candidateTextSize: Float
-        get() = sp.getFloat("candidate_text_size", 17f)
+        get() = readFloat("candidate_text_size", 17f)
         set(v) = sp.edit().putFloat("candidate_text_size", v.coerceIn(13f, 24f)).apply()
 
     /** 按键字号（sp） */
     var keyTextSize: Float
-        get() = sp.getFloat("key_text_size", 19f)
+        get() = readFloat("key_text_size", 19f)
         set(v) = sp.edit().putFloat("key_text_size", v.coerceIn(13f, 28f)).apply()
 
     /** 长按触发时间（毫秒） */
     var longPressMs: Int
-        get() = sp.getInt("long_press_ms", 400)
+        get() = readInt("long_press_ms", 400)
         set(v) = sp.edit().putInt("long_press_ms", v.coerceIn(250, 900)).apply()
 
     /** 键盘行高（dp） */
     var keyRowHeightDp: Float
-        get() = sp.getFloat(K_ROW_HEIGHT, 52f)
+        get() = readFloat(K_ROW_HEIGHT, 52f)
         set(v) = sp.edit().putFloat(K_ROW_HEIGHT, v.coerceIn(42f, 68f)).apply()
 
     /** 候选栏高度（dp） */
     var candidateBarHeightDp: Float
-        get() = sp.getFloat(K_BAR_HEIGHT, 46f)
+        get() = readFloat(K_BAR_HEIGHT, 46f)
         set(v) = sp.edit().putFloat(K_BAR_HEIGHT, v.coerceIn(36f, 60f)).apply()
 
     // ---- 工具栏按钮 ----
     var toolLanguage: Boolean
-        get() = sp.getBoolean("tool_language", true)
+        get() = readBool("tool_language", true)
         set(v) = sp.edit().putBoolean("tool_language", v).apply()
     var toolUnicode: Boolean
-        get() = sp.getBoolean("tool_unicode", true)
+        get() = readBool("tool_unicode", true)
         set(v) = sp.edit().putBoolean("tool_unicode", v).apply()
     var toolEmoji: Boolean
-        get() = sp.getBoolean("tool_emoji", true)
+        get() = readBool("tool_emoji", true)
         set(v) = sp.edit().putBoolean("tool_emoji", v).apply()
     var toolClipboard: Boolean
-        get() = sp.getBoolean("tool_clipboard", true)
+        get() = readBool("tool_clipboard", true)
         set(v) = sp.edit().putBoolean("tool_clipboard", v).apply()
     var toolAi: Boolean
-        get() = sp.getBoolean("tool_ai", true)
+        get() = readBool("tool_ai", true)
         set(v) = sp.edit().putBoolean("tool_ai", v).apply()
     var toolEdit: Boolean
-        get() = sp.getBoolean("tool_edit", true)
+        get() = readBool("tool_edit", true)
         set(v) = sp.edit().putBoolean("tool_edit", v).apply()
     var toolSettings: Boolean
-        get() = sp.getBoolean("tool_settings", true)
+        get() = readBool("tool_settings", true)
         set(v) = sp.edit().putBoolean("tool_settings", v).apply()
 
     /** 是否显示按键按下时的弹性动画 */
     var keyAnimation: Boolean
-        get() = sp.getBoolean(K_KEY_ANIM, true)
+        get() = readBool(K_KEY_ANIM, true)
         set(v) = sp.edit().putBoolean(K_KEY_ANIM, v).apply()
 
 
     // ---- 反馈 ----
     var soundEnabled: Boolean
-        get() = sp.getBoolean(K_SOUND, false)
+        get() = readBool(K_SOUND, false)
         set(v) = sp.edit().putBoolean(K_SOUND, v).apply()
 
     /** 按键音音量 0–100 */
     var soundVolume: Int
-        get() = sp.getInt("sound_volume", 60)
+        get() = readInt("sound_volume", 60)
         set(v) = sp.edit().putInt("sound_volume", v.coerceIn(0, 100)).apply()
 
     /** 0=自动 1=系统音效 2=合成音 */
     var soundMode: Int
-        get() = sp.getInt("sound_mode", 0)
+        get() = readInt("sound_mode", 0)
         set(v) = sp.edit().putInt("sound_mode", v.coerceIn(0, 2)).apply()
 
     /** 内置字体应用范围：0=仅系统缺字形时 1=所有非 ASCII */
     var builtinFontScope: Int
-        get() = sp.getInt("builtin_font_scope", 0)
+        get() = readInt("builtin_font_scope", 0)
         set(v) = sp.edit().putInt("builtin_font_scope", v.coerceIn(0, 1)).apply()
 
     var hapticEnabled: Boolean
-        get() = sp.getBoolean(K_HAPTIC, true)
+        get() = readBool(K_HAPTIC, true)
         set(v) = sp.edit().putBoolean(K_HAPTIC, v).apply()
 
     /** 触觉反馈强度（毫秒），0 表示使用系统默认轻触 */
     var hapticStrength: Int
-        get() = sp.getInt(K_HAPTIC_STRENGTH, 0)
+        get() = readInt(K_HAPTIC_STRENGTH, 0)
         set(v) = sp.edit().putInt(K_HAPTIC_STRENGTH, v).apply()
 
     // ---- 输入行为 ----
     var popupOnLongPress: Boolean
-        get() = sp.getBoolean(K_POPUP, true)
+        get() = readBool(K_POPUP, true)
         set(v) = sp.edit().putBoolean(K_POPUP, v).apply()
 
     var swipeToDelete: Boolean
-        get() = sp.getBoolean(K_SWIPE_DELETE, true)
+        get() = readBool(K_SWIPE_DELETE, true)
         set(v) = sp.edit().putBoolean(K_SWIPE_DELETE, v).apply()
 
     var autoCorrection: Boolean
-        get() = sp.getBoolean(K_AUTOCORRECT, true)
+        get() = readBool(K_AUTOCORRECT, true)
         set(v) = sp.edit().putBoolean(K_AUTOCORRECT, v).apply()
 
     /** 拼音模糊音容错（z/zh、n/l、前后鼻音等） */
     var fuzzyPinyin: Boolean
-        get() = sp.getBoolean(K_FUZZY, true)
+        get() = readBool(K_FUZZY, true)
         set(v) = sp.edit().putBoolean(K_FUZZY, v).apply()
 
     /** 提交后是否显示下一词联想（候选栏空闲时的「联想词」） */
     var nextWordPredict: Boolean
-        get() = sp.getBoolean(K_NEXT_WORD, true)
+        get() = readBool(K_NEXT_WORD, true)
         set(v) = sp.edit().putBoolean(K_NEXT_WORD, v).apply()
 
     /** 是否记录用户词频/上下文，用于个性化排序 */
     var learningEnabled: Boolean
-        get() = sp.getBoolean(K_LEARNING, true)
+        get() = readBool(K_LEARNING, true)
         set(v) = sp.edit().putBoolean(K_LEARNING, v).apply()
 
     /** 拼音简拼（首字母）输入 */
     var initialsEnabled: Boolean
-        get() = sp.getBoolean(K_INITIALS, true)
+        get() = readBool(K_INITIALS, true)
         set(v) = sp.edit().putBoolean(K_INITIALS, v).apply()
 
     /** 拼音候选数量 */
     var candidateCount: Int
-        get() = sp.getInt(K_CAND_COUNT, 8)
+        get() = readInt(K_CAND_COUNT, 8)
         set(v) = sp.edit().putInt(K_CAND_COUNT, v.coerceIn(4, 12)).apply()
 
 
 
     /** 是否在键盘顶部显示数字行 */
     var numberRow: Boolean
-        get() = sp.getBoolean(K_NUMBER_ROW, false)
+        get() = readBool(K_NUMBER_ROW, false)
         set(v) = sp.edit().putBoolean(K_NUMBER_ROW, v).apply()
 
     // ---- Unicode 码点输入 ----
     /** 输入码完整（4~6 位十六进制）时立即上屏，不再等空格/回车 */
     var unicodeAutoCommit: Boolean
-        get() = sp.getBoolean(K_UNICODE_AUTO, false)
+        get() = readBool(K_UNICODE_AUTO, false)
         set(v) = sp.edit().putBoolean(K_UNICODE_AUTO, v).apply()
 
     /** 近似编码候选的数量上限（0 表示不显示近似码） */
     var unicodeNearLimit: Int
-        get() = sp.getInt(K_UNICODE_NEAR, 10)
+        get() = readInt(K_UNICODE_NEAR, 10)
         set(v) = sp.edit().putInt(K_UNICODE_NEAR, v.coerceIn(0, 24)).apply()
 
     /** 候选栏是否显示编码/字符名提示 */
     var showCodeHint: Boolean
-        get() = sp.getBoolean(K_CODE_HINT, true)
+        get() = readBool(K_CODE_HINT, true)
         set(v) = sp.edit().putBoolean(K_CODE_HINT, v).apply()
 
     // ---- 面板 ----
     /** 键帽圆角（dp） */
     var keyRadiusDp: Float
-        get() = sp.getFloat(K_KEY_RADIUS, 10.5f)
+        get() = readFloat(K_KEY_RADIUS, 10.5f)
         set(v) = sp.edit().putFloat(K_KEY_RADIUS, v.coerceIn(4f, 18f)).apply()
 
     /** 自动收录：提交的词不在词典里时自动加进用户词典 */
     var autoCollectWords: Boolean
-        get() = sp.getBoolean("auto_collect_words", true)
+        get() = readBool("auto_collect_words", true)
         set(v) = sp.edit().putBoolean("auto_collect_words", v).apply()
 
     /** 候选太少时让 AI 临时补几条（不写入词典） */
     var aiAutoGenerate: Boolean
-        get() = sp.getBoolean("ai_auto_generate", false)
+        get() = readBool("ai_auto_generate", false)
         set(v) = sp.edit().putBoolean("ai_auto_generate", v).apply()
 
     /** AI 生成词典时是否允许单字词 */
     var allowSingleCharWords: Boolean
-        get() = sp.getBoolean("allow_single_char_words", false)
+        get() = readBool("allow_single_char_words", false)
         set(v) = sp.edit().putBoolean("allow_single_char_words", v).apply()
 
     /** 剪贴板历史条数上限，0 表示不限制 */
     var clipboardLimit: Int
-        get() = sp.getInt("clipboard_limit", 500)
+        get() = readInt("clipboard_limit", 500)
         set(v) = sp.edit().putInt("clipboard_limit", v.coerceIn(0, 100000)).apply()
 
     // ---- 隐私 ----
     /** 隐私模式：禁用 AI、学习、剪贴板历史等可能泄露信息的链路 */
     var privacyMode: Boolean
-        get() = sp.getBoolean("privacy_mode", false)
+        get() = readBool("privacy_mode", false)
         set(v) = sp.edit().putBoolean("privacy_mode", v).apply()
 
     /** 隐私模式下是否允许「本地/局域网」模型继续工作（不出公网） */
     var allowLocalAiInPrivate: Boolean
-        get() = sp.getBoolean("allow_local_ai_private", true)
+        get() = readBool("allow_local_ai_private", true)
         set(v) = sp.edit().putBoolean("allow_local_ai_private", v).apply()
 
     /** 隐私模式下剪贴板历史的保留分钟数，0 表示不自动清理 */
     var privacyPurgeMinutes: Int
-        get() = sp.getInt("privacy_purge_minutes", 10)
+        get() = readInt("privacy_purge_minutes", 10)
         set(v) = sp.edit().putInt("privacy_purge_minutes", v.coerceIn(0, 1440)).apply()
 
     /** 面板（Unicode / Emoji / 剪贴板）占屏幕高度的比例，默认半屏 */
     var panelHeightPercent: Float
-        get() = sp.getFloat(K_PANEL_HEIGHT, 0.5f)
+        get() = readFloat(K_PANEL_HEIGHT, 0.5f)
         set(v) = sp.edit().putFloat(K_PANEL_HEIGHT, v.coerceIn(0.32f, 0.66f)).apply()
 
     // ---- 字体 ----
     /** 生僻字智能字体回退 */
     var fontFallback: Boolean
-        get() = sp.getBoolean(K_FONT_FALLBACK, true)
+        get() = readBool(K_FONT_FALLBACK, true)
         set(v) = sp.edit().putBoolean(K_FONT_FALLBACK, v).apply()
 
     /** 用户导入的外部字体绝对路径（可空） */
     var importedFontPath: String?
-        get() = sp.getString(K_FONT_PATH, null)
+        get() = readString(K_FONT_PATH, null)
         set(v) = sp.edit().putString(K_FONT_PATH, v).apply()
 
 
@@ -284,56 +331,56 @@ class Prefs(context: Context) {
     /** 上次使用的汉语/字母模式：true=中文拼音 */
     /** 主题强调色，0 表示使用默认品牌色 */
     var accentColor: Int
-        get() = sp.getInt("accent_color", 0)
+        get() = readInt("accent_color", 0)
         set(v) = sp.edit().putInt("accent_color", v).apply()
 
     var scriptEnabled: Boolean
-        get() = sp.getBoolean("script_enabled", true)
+        get() = readBool("script_enabled", true)
         set(v) = sp.edit().putBoolean("script_enabled", v).apply()
 
     var aiEnabled: Boolean
-        get() = sp.getBoolean("ai_enabled", false)
+        get() = readBool("ai_enabled", false)
         set(v) = sp.edit().putBoolean("ai_enabled", v).apply()
 
     var aiApiKey: String
-        get() = sp.getString("ai_key", "").orEmpty()
+        get() = readString("ai_key", "").orEmpty()
         set(v) = sp.edit().putString("ai_key", v).apply()
 
     var aiEndpoint: String
-        get() = sp.getString("ai_endpoint", "https://api.deepseek.com/chat/completions").orEmpty()
+        get() = readString("ai_endpoint", "https://api.deepseek.com/chat/completions").orEmpty()
         set(v) = sp.edit().putString("ai_endpoint", v).apply()
 
     var aiModel: String
-        get() = sp.getString("ai_model", "deepseek-chat").orEmpty()
+        get() = readString("ai_model", "deepseek-chat").orEmpty()
         set(v) = sp.edit().putString("ai_model", v).apply()
 
     /** AI 服务商预设：deepseek / openai / moonshot / zhipu / custom */
     var aiProvider: String
-        get() = sp.getString("ai_provider", "deepseek").orEmpty()
+        get() = readString("ai_provider", "deepseek").orEmpty()
         set(v) = sp.edit().putString("ai_provider", v).apply()
 
     /** AI 请求超时（秒） */
     var aiTimeoutSec: Int
-        get() = sp.getInt("ai_timeout", 30)
+        get() = readInt("ai_timeout", 30)
         set(v) = sp.edit().putInt("ai_timeout", v.coerceIn(10, 120)).apply()
 
     /** AI 温度：越低越稳定 */
     var aiTemperature: Int
-        get() = sp.getInt("ai_temperature_pct", 30)
+        get() = readInt("ai_temperature_pct", 30)
         set(v) = sp.edit().putInt("ai_temperature_pct", v.coerceIn(0, 100)).apply()
 
     var aiPolishPrompt: String
-        get() = sp.getString("ai_polish_prompt", "").orEmpty()
+        get() = readString("ai_polish_prompt", "").orEmpty()
         set(v) = sp.edit().putString("ai_polish_prompt", v).apply()
 
     /** 启动默认模式：0=Unicode 直输，1=拼音，2=英文 */
     var defaultMode: Int
-        get() = sp.getInt(K_DEFAULT_MODE, MODE_UNICODE)
+        get() = readInt(K_DEFAULT_MODE, MODE_UNICODE)
         set(v) = sp.edit().putInt(K_DEFAULT_MODE, v).apply()
 
     /** 兼容旧版本：拼音模式开关。新逻辑用 [defaultMode]，这里跟随其变化 */
     var chineseMode: Boolean
-        get() = sp.getBoolean(K_CHINESE_MODE, true)
+        get() = readBool(K_CHINESE_MODE, true)
         set(v) = sp.edit().putBoolean(K_CHINESE_MODE, v).apply()
 
 
