@@ -113,6 +113,15 @@ def main():
         # 3) 文件必须带 GPL 声明
         if "GNU 通用公共许可证" not in src:
             problems.append(f"{rel}: 缺少 GPL 版权声明头")
+        # 4) Android 14 / targetSdk 34：Settings.Secure 的部分 key 会抛 SecurityException
+        #    （enabled_input_methods / default_input_method 等，只放行 targetSdk <= 33）
+        #    裸读一次就是「启动即闪退」，所以必须留在 runCatching 里。
+        #    MainActivity.secureString() 就是这条规矩的样板。
+        for lineno, line in enumerate(src.splitlines(), 1):
+            if "Settings.Secure.getString(" in line and "runCatching" not in line:
+                problems.append(
+                    f"{rel}:{lineno}: Settings.Secure.getString 没包在 runCatching 里 —— "
+                    f"Android 14 + targetSdk 34 上会抛 SecurityException，启动直接闪退")
     # 4) values 目录内的资源重名（会导致 aapt 报 duplicate resource）
     seen_names = {}
     values_dir = os.path.join(APP, "res", "values")
