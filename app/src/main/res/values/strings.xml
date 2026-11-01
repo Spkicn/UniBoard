@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  UniBoard 的字符串资源。
+
+  只有系统需要读取的条目放在这里（应用名、输入法名、子类型标签、
+  各页面标题）。界面内的正文文案直接写在 Kotlin 里，便于和逻辑就近维护，
+  也避免两处改一处漏一处。
+-->
+<resources>
+    <!-- 系统桌面与输入法列表里显示的名字 -->
+    <string name="app_name">UniBoard</string>
+    <string name="ime_name">UniBoard 输入法</string>
+
+    <!-- 系统输入法子类型标签 -->
+    <string name="subtype_pinyin">中文拼音</string>
+    <string name="subtype_latin">English</string>
+
+    <!-- 页面标题 -->
+    <string name="settings_title">设置</string>
+    <string name="about_title">关于</string>
+    <string name="about_license_title">许可证</string>
+    <string name="subtype_unicode">Unicode 键盘</string>
+    <string name="subtype_pc">PC 键盘</string>
+
+    <!-- 词典相关页面标题（同时在清单文件里作为 Activity 标签） -->
+    <string name="lexicon_manager_title">管理词典</string>
+    <string name="ai_lexicon_title">AI 生成词条</string>
+</resources>

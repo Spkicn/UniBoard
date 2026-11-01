@@ -1,0 +1,33 @@
+# Android / Gradle
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+*.hprof
+/app/build/
+/platform/
+/build/
+/app/release/
+
+# 构建产物
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# 词库生成中间文件（体积大，可由 tools/gen_lexicon.py 重新获取）
+tools/lexicon/
+tools/*.bin
+tools/*.jar
+
+# 编辑器
+.vscode/
+*.swp
+
+# WebNex 项目本地状态
+.webnex/

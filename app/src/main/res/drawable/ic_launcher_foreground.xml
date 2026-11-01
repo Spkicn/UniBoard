@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  UniBoard 应用图标前景：自绘的四色几何图形。
+  本图形为项目原创，不包含任何第三方商标、Logo 或其派生元素。
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 外层四色圆环 -->
+    <path
+        android:pathData="M54,31 A23,23 0 0 1 77,54"
+        android:strokeColor="#4285F4"
+        android:strokeWidth="7"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M77,54 A23,23 0 0 1 54,77"
+        android:strokeColor="#EA4335"
+        android:strokeWidth="7"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M54,77 A23,23 0 0 1 31,54"
+        android:strokeColor="#FBBC05"
+        android:strokeWidth="7"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M31,54 A23,23 0 0 1 54,31"
+        android:strokeColor="#34A853"
+        android:strokeWidth="7"
+        android:strokeLineCap="round" />
+
+    <!-- 中心键帽 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M46,42 h16 a6,6 0 0 1 6,6 v12 a6,6 0 0 1 -6,6 h-16 a6,6 0 0 1 -6,-6 v-12 a6,6 0 0 1 6,-6 z" />
+    <!-- 键帽内的字符占位线 -->
+    <path
+        android:pathData="M47,54 h14"
+        android:strokeColor="#1B1D21"
+        android:strokeWidth="3.4"
+        android:strokeLineCap="round" />
+</vector>

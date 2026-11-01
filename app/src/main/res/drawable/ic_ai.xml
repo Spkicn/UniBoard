@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AI：四角星 + 小闪光，比原来的细星形更醒目 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M12,2.6l2.05,5.0l5.35,0.42l-4.07,3.52l1.25,5.22L12,13.85l-4.58,2.91l1.25,-5.22L4.6,8.02l5.35,-0.42z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M18.4,15.6l0.75,1.85l1.85,0.75l-1.85,0.75l-0.75,1.85l-0.75,-1.85l-1.85,-0.75l1.85,-0.75z" />
+</vector>

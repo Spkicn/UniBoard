@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  UniBoard — 自由软件（GPL-3.0-or-later）
+  Copyright (C) 2026 UniBoard contributors
+  本文件是 UniBoard 的一部分，按 GNU 通用公共许可证第 3 版或更新版本授权。
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      INTERNET 权限仅用于用户主动启用的 AI 润色/联想功能；关闭 AI 时应用完全不联网。
+      词库、字体全部内置或由用户本地导入。
+    -->
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:name=".UniBoardApp"
+        android:allowBackup="true"
+        android:usesCleartextTraffic="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.UniBoard">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.LicenseActivity"
+            android:exported="false"
+            android:label="@string/about_license_title" />
+
+        <activity
+            android:name=".ui.LexiconManagerActivity"
+            android:exported="false"
+            android:label="@string/lexicon_manager_title" />
+
+        <activity
+            android:name=".ui.AiLexiconActivity"
+            android:exported="false"
+            android:label="@string/ai_lexicon_title" />
+
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:exported="false"
+            android:label="@string/settings_title" />
+
+        <activity
+            android:name=".ui.AboutActivity"
+            android:exported="false"
+            android:label="@string/about_title" />
+
+        <service
+            android:name=".ime.UniBoardImeService"
+            android:exported="true"
+            android:label="@string/ime_name"
+            android:theme="@style/Theme.UniBoard.Ime"
+            android:permission="android.permission.BIND_INPUT_METHOD">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
+        </service>
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+    </application>
+</manifest>

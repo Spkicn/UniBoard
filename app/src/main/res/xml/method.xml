@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  UniBoard — 自由软件（GPL-3.0-or-later）
+  输入法描述文件：声明子类型与设置入口。
+-->
+<input-method xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="org.YavSoft.UniBoard.ui.SettingsActivity"
+    android:supportsSwitchingToNextInputMethod="true">
+
+    <subtype
+        android:icon="@drawable/ic_subtype_pinyin"
+        android:imeSubtypeLocale="zh_CN"
+        android:imeSubtypeMode="keyboard"
+        android:isAsciiCapable="false"
+        android:label="@string/subtype_pinyin"
+        android:languageTag="zh-CN" />
+
+    <subtype
+        android:icon="@drawable/ic_subtype_latin"
+        android:imeSubtypeLocale="en_US"
+        android:imeSubtypeMode="keyboard"
+        android:isAsciiCapable="true"
+        android:label="@string/subtype_latin"
+        android:languageTag="en-US" />
+    <subtype
+        android:icon="@drawable/ic_unicode"
+        android:imeSubtypeLocale="en_US"
+        android:imeSubtypeMode="keyboard"
+        android:isAsciiCapable="true"
+        android:label="@string/subtype_unicode"
+        android:languageTag="en-US-x-uniboard-unicode" />
+
+    <subtype
+        android:icon="@drawable/ic_keyboard"
+        android:imeSubtypeLocale="en_US"
+        android:imeSubtypeMode="keyboard"
+        android:isAsciiCapable="true"
+        android:label="@string/subtype_pc"
+        android:languageTag="en-US-x-uniboard-pc" />
+</input-method>

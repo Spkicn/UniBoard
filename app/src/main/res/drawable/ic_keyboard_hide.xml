@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 收起键盘：向下箭头 + 键盘底座 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M12,14.5l-5,-5h3.2V4h3.6v5.5H17z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M3,17h18v3H3z" />
+</vector>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  这里只放代码里实际引用的颜色。
+
+  键盘本体配色不在这里：它需要跟随系统深浅色和用户主题色动态生成，
+  统一放在 ui/theme/KeyboardTheme.kt 里。
+
+  下面 md_* 是 Material 3 的颜色角色（浅色），深色版本在 values-night/colors.xml。
+  设置页、对话框等 Material 组件都从这些角色取色，不再写死颜色。
+-->
+<resources>
+    <!-- 品牌色：仍是默认强调色，也是设置页分区标题的兜底色 -->
+    <color name="brand_blue">#4285F4</color>
+
+    <!-- MD3 颜色角色：浅色 -->
+    <color name="md_primary">#1B6EF3</color>
+    <color name="md_on_primary">#FFFFFF</color>
+    <color name="md_primary_container">#D7E3FF</color>
+    <color name="md_on_primary_container">#001B3F</color>
+    <color name="md_secondary">#565E71</color>
+    <color name="md_on_secondary">#FFFFFF</color>
+    <color name="md_surface">#FDFBFF</color>
+    <color name="md_surface_container">#F1EFF4</color>
+    <color name="md_surface_container_high">#EBE8F0</color>
+    <color name="md_on_surface">#1B1B1F</color>
+    <color name="md_on_surface_variant">#44474E</color>
+    <color name="md_outline">#74777F</color>
+    <color name="md_outline_variant">#C4C6D0</color>
+</resources>

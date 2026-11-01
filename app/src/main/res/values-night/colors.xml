@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MD3 颜色角色：深色 -->
+<resources>
+    <color name="system_bar">#FF1C1B1F</color>
+
+    <color name="md_primary">#AEC6FF</color>
+    <color name="md_on_primary">#002E6A</color>
+    <color name="md_primary_container">#004494</color>
+    <color name="md_on_primary_container">#D7E3FF</color>
+    <color name="md_secondary">#BEC6DC</color>
+    <color name="md_on_secondary">#283141</color>
+    <color name="md_surface">#131316</color>
+    <color name="md_surface_container">#1F1F23</color>
+    <color name="md_surface_container_high">#29292E</color>
+    <color name="md_on_surface">#E4E2E6</color>
+    <color name="md_on_surface_variant">#C4C6D0</color>
+    <color name="md_outline">#8E9099</color>
+    <color name="md_outline_variant">#44474E</color>
+</resources>
