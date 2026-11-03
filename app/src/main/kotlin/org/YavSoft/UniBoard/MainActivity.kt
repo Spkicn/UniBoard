@@ -29,11 +29,33 @@ class MainActivity : SettingsBase() {
         title(getString(R.string.app_name), 26f)
         subtitle("以 Unicode 为核心的输入法。")
 
+        buildLastCrash()
         buildSearch()
         buildStatus()
         section("设置")
         buildEntries()
         buildFooter()
+    }
+
+    /**
+     * 上次启动崩过的话，把入口直接摆在首页最上面。
+     *
+     * 崩溃如果发生在 Application.onCreate（比如设置文件里存了别的类型），
+     * 界面一行都来不及建，用户只看得到"已停止运行"。那就只能等下次启动时
+     * 把上一次留下的记录翻出来 —— 不然这个 bug 永远没法定位。
+     */
+    private fun buildLastCrash() {
+        val last = org.YavSoft.UniBoard.core.CrashLog.latest(this) ?: return
+        if (System.currentTimeMillis() - last.lastModified() > 30L * 24 * 3600 * 1000) return
+        val body = runCatching { last.readText() }.getOrNull() ?: return
+        val box = card()
+        action(box, "⚠ 上次启动崩溃了，点这里看堆栈") {
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("上次崩溃")
+                .setMessage(body)
+                .setPositiveButton("知道了", null)
+                .show()
+        }
     }
 
     private lateinit var searchResults: LinearLayout
@@ -140,9 +162,12 @@ class MainActivity : SettingsBase() {
 
     private fun buildStatus() {
         val box = card()
+        // 只算一次：这两个调用以前各算两次，其中一次还会把异常带出去
+        val enabled = isImeEnabled()
+        val selected = enabled && isImeSelected()
         val state = when {
-            isImeSelected() -> "已就绪：UniBoard 为当前输入法"
-            isImeEnabled() -> "已启用，但系统当前使用其他输入法"
+            selected -> "已就绪：UniBoard 为当前输入法"
+            enabled -> "已启用，但系统当前使用其他输入法"
             else -> "尚未启用 UniBoard"
         }
         box.addView(TextView(this).apply {
@@ -158,8 +183,8 @@ class MainActivity : SettingsBase() {
             setPadding(dpInt(16f), 0, dpInt(16f), dpInt(8f))
         })
         when {
-            !isImeEnabled() -> action(box, "前往系统设置启用") { openImeSettings() }
-            !isImeSelected() -> action(box, "选择输入法") { showImePicker() }
+            !enabled -> action(box, "前往系统设置启用") { openImeSettings() }
+            !selected -> action(box, "选择输入法") { showImePicker() }
             else -> action(box, "打开输入法设置") { openImeSettings() }
         }
     }
@@ -232,13 +257,47 @@ class MainActivity : SettingsBase() {
         box.addView(row)
     }
 
+    /**
+     * 读 `Settings.Secure` 里跟输入法有关的那两个 key。
+     *
+     * Android 14 起这两个 key 只允许 `targetSdkVersion <= 33` 的进程读，
+     * 本项目 `targetSdk = 34`，直接读会抛：
+     *
+     *   java.lang.SecurityException: Settings key: <enabled_input_methods>
+     *   is only readable to apps with targetSdkVersion lower than or equal to: 33
+     *
+     * 这行以前裸在 `onCreate` 的调用链上（build → buildStatus → isImeEnabled），
+     * 一抛就是启动即闪退。所以这里一律兜住，拿不到就当没有。
+     */
+    private fun secureString(key: String): String? =
+        runCatching { Settings.Secure.getString(contentResolver, key) }.getOrNull()
+
+    /**
+     * 是否已启用。
+     *
+     * 优先走 `InputMethodManager.getEnabledInputMethodList()` —— API 3 起就有，
+     * 不受 targetSdk 限制，也不需要任何权限，是 Android 14 之后的正路。
+     */
     private fun isImeEnabled(): Boolean {
-        val enabled = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_INPUT_METHODS)
+        val list = runCatching {
+            getSystemService(InputMethodManager::class.java)?.enabledInputMethodList
+        }.getOrNull()
+        if (list != null) return list.any { it?.packageName == packageName }
+
+        // 退路：老设备上 IMM 拿不到时再读 Settings.Secure（已在 secureString 里兜住异常）
+        val enabled = secureString(Settings.Secure.ENABLED_INPUT_METHODS)
         return !enabled.isNullOrEmpty() && enabled.contains(packageName)
     }
 
+    /**
+     * 是否为当前输入法。
+     *
+     * `default_input_method` 同样受 Android 14 限制，读不到就返回 false ——
+     * 上面文案会退成「已启用，但系统当前使用其他输入法」，配合「选择输入法」按钮，
+     * 用户点一下就能切过来，不会说错话也不会崩。
+     */
     private fun isImeSelected(): Boolean {
-        val current = Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)
+        val current = secureString(Settings.Secure.DEFAULT_INPUT_METHOD)
         return current != null && current.startsWith(packageName)
     }
 

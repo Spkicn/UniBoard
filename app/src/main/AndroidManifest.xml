@@ -4,7 +4,8 @@
   Copyright (C) 2026 UniBoard contributors
   本文件是 UniBoard 的一部分，按 GNU 通用公共许可证第 3 版或更新版本授权。
 -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!--
       INTERNET 权限仅用于用户主动启用的 AI 润色/联想功能；关闭 AI 时应用完全不联网。
@@ -12,6 +13,20 @@
     -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+      按键震动：KeyboardView.vibrate() 一直在调 Vibrator，但清单里从来没有申请这条权限，
+      于是 SecurityException 被 runCatching 悄悄吞掉 —— 震动开关打开也没反应。
+    -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!--
+      崩溃通知（Android 13+ 需要通知权限才会显示）。
+      启动失败时把堆栈推到通知栏，用户不用连电脑就能看到原因。
+    -->
+    <uses-permission
+        android:name="android.permission.POST_NOTIFICATIONS"
+        tools:targetApi="tiramisu" />
 
     <application
         android:name=".UniBoardApp"

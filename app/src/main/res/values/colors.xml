@@ -26,4 +26,11 @@
     <color name="md_on_surface_variant">#44474E</color>
     <color name="md_outline">#74777F</color>
     <color name="md_outline_variant">#C4C6D0</color>
+
+    <!--
+      系统栏底色。values-night/themes.xml 里的 Theme.App 引用了它，
+      但浅色目录一直没给默认值 —— 一旦有浅色配置的设备解析到这条样式，
+      取色就会失败。补上默认值（浅色下的近白灰）。
+    -->
+    <color name="system_bar">#FFF2F2F2</color>
 </resources>
